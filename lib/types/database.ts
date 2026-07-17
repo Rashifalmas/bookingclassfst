@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'lecturer' | 'student' | 'class_leader';
+export type UserRole = 'admin_facilities' | 'lecturer' | 'student';
 
 export type DayOfWeek =
   | 'Monday'
@@ -23,8 +23,16 @@ export interface Profile {
   full_name: string;
   email: string;
   role: UserRole;
+  is_class_leader: boolean;
   lecturer_id: string | null;
   student_id: string | null;
+  created_at: string;
+}
+
+export interface Course {
+  course_id: string;
+  course_code: string;
+  course_name: string;
   created_at: string;
 }
 
@@ -42,6 +50,7 @@ export interface RoomFacility {
 export interface MasterSchedule {
   schedule_id: string;
   room_id: string;
+  course_id: string;
   course_name: string;
   course_code: string;
   lecturer_id: string;
@@ -105,6 +114,15 @@ export interface Database {
         Row: Profile;
         Insert: Omit<Profile, 'created_at'> & { created_at?: string };
         Update: Partial<Profile>;
+        Relationships: [];
+      };
+      courses: {
+        Row: Course;
+        Insert: Omit<Course, 'course_id' | 'created_at'> & {
+          course_id?: string;
+          created_at?: string;
+        };
+        Update: Partial<Course>;
         Relationships: [];
       };
       room_facilities: {
@@ -171,6 +189,7 @@ export interface Database {
 
 export type ScheduleWithRelations = MasterSchedule & {
   room_facilities: RoomFacility | null;
+  courses: Course | null;
   profiles: Profile | null;
   student_enrollments: { student_id: string }[];
 };

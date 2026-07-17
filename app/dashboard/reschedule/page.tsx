@@ -45,12 +45,14 @@ import type {
   DayOfWeek,
 } from '@/lib/types/database';
 import { DAYS, TIME_SLOTS, ALL_FACILITIES } from '@/lib/types/database';
+import type { Course } from '@/lib/types/database';
 import { formatTime, statusColor, statusLabel } from '@/lib/schedule-utils';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 type ScheduleRow = MasterSchedule & {
   room_facilities: RoomFacility | null;
+  courses: Course | null;
 };
 
 type RequestRow = RescheduleRequest & {
@@ -74,13 +76,13 @@ export default function ReschedulePage() {
     const [{ data: schedData }, { data: reqData }] = await Promise.all([
       supabase
         .from('master_schedules')
-        .select('*, room_facilities(*)')
+        .select('*, room_facilities(*), courses(*)')
         .eq('lecturer_id', profile.id)
         .order('day_of_week')
         .order('start_time'),
       supabase
         .from('reschedule_requests')
-        .select('*, master_schedules(*, room_facilities(*)), schedule_proposals(*)')
+        .select('*, master_schedules(*, room_facilities(*), courses(*)), schedule_proposals(*)')
         .eq('lecturer_id', profile.id)
         .order('created_at', { ascending: false }),
     ]);
@@ -159,13 +161,13 @@ function RequestCard({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <p className="font-semibold">{sched?.course_name}</p>
+              <p className="font-semibold">{sched?.courses?.course_name || sched?.course_name}</p>
               <Badge variant="outline" className={statusColor(request.status)}>
                 {statusLabel(request.status)}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              {sched?.course_code} · {sched?.class_group} ·{' '}
+              {sched?.courses?.course_code || sched?.course_code} · {sched?.class_group} ·{' '}
               {sched?.day_of_week} {formatTime(sched?.start_time ?? '')} -{' '}
               {formatTime(sched?.end_time ?? '')}
             </p>
@@ -396,32 +398,36 @@ function RescheduleWizard({
     const studentIds = (enrollments ?? []).map((e) => e.student_id);
     const sched = schedules.find((s) => s.schedule_id === selectedSchedule);
 
+    const courseNameLabel = sched?.courses?.course_name || sched?.course_name || 'A class';
+
     if (studentIds.length > 0) {
       const notifInserts = studentIds.map((sid) => ({
         user_id: sid,
         title: 'Reschedule proposal pending review',
-        message: `${sched?.course_name ?? 'A class'} has a proposed new time: ${proposedDay} ${slot!.start}-${slot!.end}. Awaiting class leader approval.`,
+        message: `${courseNameLabel} has a proposed new time: ${proposedDay} ${slot!.start}-${slot!.end}. Awaiting class leader approval.`,
         type: 'warning' as const,
         related_request_id: (reqData as RescheduleRequest).request_id,
       }));
       await supabase.from('notifications').insert(notifInserts);
-    }
 
-    const { data: classLeaders } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('role', 'class_leader');
+      const { data: classLeaders } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('id', studentIds)
+        .eq('role', 'student')
+        .eq('is_class_leader', true);
 
-    if (classLeaders && classLeaders.length > 0) {
-      await supabase.from('notifications').insert(
-        classLeaders.map((cl) => ({
-          user_id: cl.id,
-          title: 'New reschedule proposal to review',
-          message: `${profile.full_name} proposed a new time for ${sched?.course_name ?? 'a class'}: ${proposedDay} ${slot!.start}-${slot!.end}.`,
-          type: 'info' as const,
-          related_request_id: (reqData as RescheduleRequest).request_id,
-        }))
-      );
+      if (classLeaders && classLeaders.length > 0) {
+        await supabase.from('notifications').insert(
+          classLeaders.map((cl) => ({
+            user_id: cl.id,
+            title: 'New reschedule proposal to review',
+            message: `${profile.full_name} proposed a new time for ${courseNameLabel}: ${proposedDay} ${slot!.start}-${slot!.end}.`,
+            type: 'info' as const,
+            related_request_id: (reqData as RescheduleRequest).request_id,
+          }))
+        );
+      }
     }
 
     toast({
@@ -495,9 +501,9 @@ function RescheduleWizard({
                   )}
                 >
                   <div>
-                    <p className="text-sm font-medium">{s.course_name}</p>
+                    <p className="text-sm font-medium">{s.courses?.course_name || s.course_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {s.course_code} · {s.class_group} · {s.day_of_week}{' '}
+                      {s.courses?.course_code || s.course_code} · {s.class_group} · {s.day_of_week}{' '}
                       {formatTime(s.start_time)}-{formatTime(s.end_time)}
                     </p>
                   </div>
@@ -656,7 +662,8 @@ function RescheduleWizard({
             <Card>
               <CardContent className="space-y-2 p-4 text-sm">
                 <ConfirmRow icon={Calendar} label="Class" value={
-                  schedules.find((s) => s.schedule_id === selectedSchedule)?.course_name ?? ''
+                  (schedules.find((s) => s.schedule_id === selectedSchedule)?.courses?.course_name) ||
+                  (schedules.find((s) => s.schedule_id === selectedSchedule)?.course_name ?? '')
                 } />
                 <ConfirmRow
                   icon={Calendar}

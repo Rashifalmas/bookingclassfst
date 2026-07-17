@@ -17,16 +17,14 @@ import { Users, Loader2, Search, ShieldCheck, BookOpen, ClipboardList, Graduatio
 import type { Profile, UserRole } from '@/lib/types/database';
 
 const ROLE_ICONS: Record<UserRole, React.ElementType> = {
-  admin: ShieldCheck,
+  admin_facilities: ShieldCheck,
   lecturer: BookOpen,
-  class_leader: ClipboardList,
   student: GraduationCap,
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
-  admin: 'text-destructive bg-destructive/10',
+  admin_facilities: 'text-destructive bg-destructive/10',
   lecturer: 'text-primary bg-primary/10',
-  class_leader: 'text-warning bg-warning/10',
   student: 'text-success bg-success/10',
 };
 
@@ -82,9 +80,8 @@ export default function UsersPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
+            <SelectItem value="admin_facilities">Admin Facilities</SelectItem>
             <SelectItem value="lecturer">Lecturer</SelectItem>
-            <SelectItem value="class_leader">Class Leader</SelectItem>
             <SelectItem value="student">Student</SelectItem>
           </SelectContent>
         </Select>
@@ -114,9 +111,16 @@ export default function UsersPage() {
                     {u.lecturer_id && <p>NIDN: {u.lecturer_id}</p>}
                     {u.student_id && <p>NIM: {u.student_id}</p>}
                   </div>
-                  <Badge variant="outline" className="capitalize">
-                    {u.role.replace('_', ' ')}
-                  </Badge>
+                  <div className="flex flex-col gap-1 items-end">
+                    <Badge variant="outline" className="capitalize">
+                      {u.role.replace('_', ' ')}
+                    </Badge>
+                    {u.is_class_leader && (
+                      <Badge variant="secondary" className="capitalize">
+                        Class Leader
+                      </Badge>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             );
