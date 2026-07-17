@@ -19,12 +19,14 @@ import type { Profile, UserRole } from '@/lib/types/database';
 const ROLE_ICONS: Record<UserRole, React.ElementType> = {
   admin: ShieldCheck,
   lecturer: BookOpen,
+  class_leader: ClipboardList,
   student: GraduationCap,
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
   admin: 'text-destructive bg-destructive/10',
   lecturer: 'text-primary bg-primary/10',
+  class_leader: 'text-warning bg-warning/10',
   student: 'text-success bg-success/10',
 };
 
@@ -82,6 +84,7 @@ export default function UsersPage() {
             <SelectItem value="all">All Roles</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="lecturer">Lecturer</SelectItem>
+            <SelectItem value="class_leader">Class Leader</SelectItem>
             <SelectItem value="student">Student</SelectItem>
           </SelectContent>
         </Select>
