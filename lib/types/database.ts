@@ -1,4 +1,4 @@
-export type UserRole = 'admin_facilities' | 'lecturer' | 'student';
+export type UserRole = 'admin' | 'lecturer' | 'student';
 
 export type DayOfWeek =
   | 'Monday'
