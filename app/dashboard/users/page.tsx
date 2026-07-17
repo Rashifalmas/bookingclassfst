@@ -17,13 +17,13 @@ import { Users, Loader2, Search, ShieldCheck, BookOpen, ClipboardList, Graduatio
 import type { Profile, UserRole } from '@/lib/types/database';
 
 const ROLE_ICONS: Record<UserRole, React.ElementType> = {
-  admin_facilities: ShieldCheck,
+  admin: ShieldCheck,
   lecturer: BookOpen,
   student: GraduationCap,
 };
 
 const ROLE_COLORS: Record<UserRole, string> = {
-  admin_facilities: 'text-destructive bg-destructive/10',
+  admin: 'text-destructive bg-destructive/10',
   lecturer: 'text-primary bg-primary/10',
   student: 'text-success bg-success/10',
 };
@@ -80,7 +80,7 @@ export default function UsersPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="admin_facilities">Admin Facilities</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
             <SelectItem value="lecturer">Lecturer</SelectItem>
             <SelectItem value="student">Student</SelectItem>
           </SelectContent>
